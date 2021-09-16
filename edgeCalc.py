@@ -1,6 +1,12 @@
 #9/9/21
 import math
 from heapq import heapify, heappush, heappop # This is for the min heap library
+import numpy as np
+
+numNodes = 4
+edgeMatrix = np.zeros(shape = [numNodes, numNodes], dtype = float)
+weightMatrix = np.zeros(shape = [numNodes, numNodes], dtype = float)
+nodeCounter = 0
 
 def edgeCost(node1, node2): # defining the edges using the distance formula
     xdist = node1.xCoord - node2.xCoord
@@ -8,29 +14,41 @@ def edgeCost(node1, node2): # defining the edges using the distance formula
     dist = math.sqrt(pow(xdist, 2) + pow(ydist, 2))
     return dist
 
+def connectNodes(node1, node2):
+    global edgeMatrix
+    edgeMatrix[node1, node2] = 1
+    edgeMatrix[node2, node1] = 1
+
+def calcWeights():
+    global edgeMatrix
+    global weightMatrix
+    global nodes
+    for i in range(numNodes):
+        for j in range(numNodes):
+            if edgeMatrix[i, j] == 1:
+                cost = edgeCost(nodes[i], nodes[j])
+                weightMatrix[i, j] = cost
+
 class Node(): # defining nodes
-    connectedNodes = []
-    nodeID = 0
+    nodeID = -1
     xCoord = 0
     yCoord = 0
-    cost = 0
+    cost = -1
     prevNode = None
     
-    def __init__ (self, xCoord, yCoord): # so you can pss values to a new node
+    def __init__ (self, xCoord, yCoord): # so you can pass values to a new node
+        global nodeCounter
         self.xCoord = xCoord
         self.yCoord = yCoord
         self.cost = 99999999999.9
-
-    def setCost(self, newCost):
-        self.cost = newCost
-
-    def connect(self, nodeArray):
-        self.connectedNodes = nodeArray
+        self.nodeID = nodeCounter
+        nodeCounter += 1
 
     def updateCost(self, prevNode):
         if self.cost == 0:
             return
-        edge = edgeCost(self, prevNode) + prevNode.cost
+        global weightMatrix
+        edge = weightMatrix[self.nodeID, prevNode.nodeID] + prevNode.cost
         
         if(edge < self.cost):
             self.cost = edge
@@ -38,12 +56,18 @@ class Node(): # defining nodes
     
     def setStart(self):
         self.cost = 0
-        for nextNode in self.connectedNodes:
-            nextNode.updateCost(self)
+        global numNodes
+        global nodes
+        for i in range(numNodes):
+            if edgeMatrix[self.nodeID, nodes[i].nodeID] == 1:
+                nodes[i].updateCost(self)
     
     def explore(self):
-        for nextNode in self.connectedNodes:
-            nextNode.updateCost(self)
+        global numNodes
+        global nodes
+        for i in range(numNodes):
+            if edgeMatrix[self.nodeID, nodes[i].nodeID] == 1:
+                nodes[i].updateCost(self)
 
 
 nodes = []
@@ -52,10 +76,13 @@ nodes.append(Node(3,4))
 nodes.append(Node(2,1))
 nodes.append(Node(7,8))
 
-nodes[0].connect([nodes[1], nodes[2]])
-nodes[1].connect([nodes[0], nodes[2], nodes[3]])
-nodes[2].connect([nodes[0], nodes[1], nodes[3]])
-nodes[3].connect([nodes[1], nodes[2]])
+connectNodes(0,1)
+connectNodes(0,2)
+connectNodes(1,2)
+connectNodes(1,3)
+connectNodes(2,3)
+
+calcWeights()
 
 nodes[0].setStart()
 destination = nodes[3]
@@ -72,8 +99,8 @@ while openList[0][1] != destination:
     heappop(openList)
     
     if openList[0][1] == destination:
-        print(openList[0][1].cost)
+        print(openList[0][1].nodeID)
 
-print(openList[0][1].prevNode.cost)
-print(openList[0][1].prevNode.prevNode.cost)
+print(openList[0][1].prevNode.nodeID)
+print(openList[0][1].prevNode.prevNode.nodeID)
 
