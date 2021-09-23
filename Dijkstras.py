@@ -1,17 +1,13 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[58]:
-
-
 import math
 from heapq import heapify, heappush, heappop # This is for the min heap library
 import numpy as np
 import sys
 import random
 import time
+from matplotlib import pyplot as plt
 
-numNodes = 1000
+
+numNodes = 7
 edgeMatrix = np.zeros(shape = [numNodes, numNodes], dtype = float)
 weightMatrix = np.zeros(shape = [numNodes, numNodes], dtype = float)
 nodes = []
@@ -29,16 +25,13 @@ def setup():
         nodeCost.append(sys.maxsize)
     
     nodes.append(Node(0,0))
-    numConnections = 10
+    numConnections = 3
     for i in range(numNodes-2):
-        #xCoord = random.randint(i // numConnections, numConnections + i // numConnections)
-        #yCoord = random.randint(i // numConnections, numConnections + i // numConnections)
-        xCoord = random.randint(0, numNodes // 100)
-        yCoord = random.randint(0, numNodes // 100)
+        xCoord = random.randint(0, numNodes)
+        yCoord = random.randint(0, numNodes)
         nodes.append(Node(xCoord, yCoord))
         
     nodes.append(Node(numNodes, numNodes))
-    #nodes.append(Node(numConnections + numNodes // numConnections, numConnections + numNodes // numConnections))
     
     for node1 in range(numNodes):
         for node2 in range(numConnections):
@@ -137,16 +130,19 @@ while node != destination:
 
 print("Finished:", time.ctime(time.time()))
 
-print(node.nodeID)
-print(nodeCost[node.nodeID])
+for i in range(numNodes):
+    plt.plot(nodes[i].xCoord, nodes[i].yCoord, marker = "o")
 
-#while node.prevNode != None:
-    #print(node.prevNode.nodeID)
-    #node = node.prevNode
+for i in range(numNodes):
+    for j in range (numNodes):
+        if edgeMatrix[i][j] != 0 :
+            plt.plot([nodes[i].xCoord, nodes[j].xCoord],[nodes[i].yCoord, nodes[j].yCoord], 'b')
 
+currentNode = node
+prevNode = node.prevNode
 
-# In[ ]:
-
-
-
-
+while prevNode != None:
+    plt.plot([currentNode.xCoord, prevNode.xCoord], [currentNode.yCoord, prevNode.yCoord], 'r')
+    currentNode = prevNode
+    prevNode = currentNode.prevNode
+plt.show()
