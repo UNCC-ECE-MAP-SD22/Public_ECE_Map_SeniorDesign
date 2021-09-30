@@ -291,4 +291,3 @@ while prevNode != None:
     currentNode = prevNode
     prevNode = currentNode.prevNode
 plt.show()
-
