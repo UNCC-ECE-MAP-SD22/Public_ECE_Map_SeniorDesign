@@ -1,11 +1,20 @@
+#Auther: Yinfei Li
+#Date: OCT 8, 2021
+
 import overpy
 import pandas as pd
 import time
 
 OverpassAPI = overpy.Overpass()
 
+#Class for using OSM Overpass API
 class OverPass_API_Search:
-    def QueryGetWay(str):
+    #/---------------------------------------------------------
+    # Search for a way (ROAD) in OSM
+    # Input parameter is str variable in Query search format
+    # Query example "way(40107017); out;" 40107017 is way id
+    #/----------------------------------------------------------
+    def QueryGetWay(str):               
         result = OverpassAPI.query(str)
         way = result.ways[0]
         node = way.get_nodes(resolve_missing = True)
@@ -19,7 +28,8 @@ if __name__ == "__main__":
     for i in range (len(node)):
         df = df.append({'ID': node[i].id, 'Longtitude' : node[i].lon, 'Latitude' : node[i].lat}, ignore_index=True)
     #time3 = time.time()
-    i = int(df[df['ID'] == 482708531].index.values)
+    #i = int(df[df['ID'] == 482708531].index.values)
+    #print(i)
     #for i in range (len(node)):
         #print(df[df['ID'] == node[i].id])
     #print(type(df.iloc[0]['ID']))
