@@ -1,4 +1,5 @@
 #Auther: Yinfei Li
+#Co-Worker:
 #Date: OCT 8, 2021
 
 import overpy
@@ -24,6 +25,7 @@ if __name__ == "__main__":
     #time1 = time.time()
     df = pd.DataFrame(columns=[ 'ID', 'Longtitude', 'Latitude'])
     node = OverPass_API_Search.QueryGetWay("way(40107017); out;")
+    node2 = OverPass_API_Search.QueryGetWay("way(); out;")
     #time2 = time.time()
     for i in range (len(node)):
         df = df.append({'ID': node[i].id, 'Longtitude' : node[i].lon, 'Latitude' : node[i].lat}, ignore_index=True)
