@@ -23,7 +23,9 @@ for i in range(len(route)):
         while route[j] != '&':
             lon += route[j]
             j += 1
-        print(lat, lon)
+        center_x = float(lat)
+        center_y = float(lon)
+        
         
     if (route[i] + route[i+1] + route[i+2]) == "lat":
         j = i+5
@@ -31,7 +33,7 @@ for i in range(len(route)):
         while route[j] != '"':
             lat += route[j]
             j += 1
-        
+        road_path.append(float(lat))
     
     if (route[i] + route[i+1] + route[i+2]) == "lon":
         j = i+5
@@ -39,4 +41,8 @@ for i in range(len(route)):
         while route[j] != '"':
             lon += route[j]
             j += 1
-    
+        road_path.append(float(lon))
+print(center_x)
+print(center_y)
+
+print(road_path)
