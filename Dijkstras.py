@@ -1,12 +1,21 @@
+# In[1]:
+
+
+# Imports
 import math
 from heapq import heapify, heappush, heappop # This is for the min heap library
 import numpy as np
 import sys
-import random
-import time
+#import random 
+#import time
 from matplotlib import pyplot as plt
 
-numNodes = 11
+
+# In[2]:
+
+
+# Set up variables for dijkstra's
+numNodes = 7
 edgeMatrix = np.zeros(shape = [numNodes, numNodes], dtype = int)
 weightMatrix = np.zeros(shape = [numNodes, numNodes], dtype = float)
 nodes = []
@@ -15,17 +24,29 @@ nodeCost = []
 explored = [False] * numNodes
 openList = []
 
-bigNodes = [0, 2, 3, 5, 6, 7, 9, 10]
-bigEdgeMatrix = np.zeros(shape = [len(bigNodes), len(bigNodes)], dtype = int)
-bigWeightMatrix = np.zeros(shape = [len(bigNodes), len(bigNodes)], dtype = float)
+# defines coordinates of each building
+buildings = {
+    "epic": [35.30923, -80.74114],
+    "duke": [35.31222, -80.74083],
+    "bio": [35.31289, -80.74168],
+    "grigg": [35.31143, -80.7427],
+}
 
+
+# In[3]:
+
+
+# Node class
 class Node(): # defining nodes
     nodeID = -1
     xCoord = 0
     yCoord = 0
     prevNode = None
     isBuilding = False
+    forwardPath = []
+    backPath = []
     
+    # initialize an instance
     def __init__ (self, xCoord, yCoord):
         global nodeCounter
         self.xCoord = xCoord
@@ -33,6 +54,7 @@ class Node(): # defining nodes
         self.nodeID = nodeCounter
         nodeCounter += 1
     
+    # used for less than comparisons (min heap)
     def __lt__(self, other):
         global nodeCost
         if nodeCost[self.nodeID] < nodeCost[other.nodeID]:
@@ -40,12 +62,87 @@ class Node(): # defining nodes
         else:
             return False
         
+    # keep track of what node you came from
     def setPrevNode(self, node):
         self.prevNode = node
     
-    def setAsBuilding(self):
+    def setBuilding(self):
         self.isBuilding = True
+    
+    # used for the path storage in the abstraction
+    def setPath(self, path):
+        self.forwardPath = path
+        temp = path
+        temp.reverse()
+        self.backPath = temp
+    
+    # return the path stored in the big node (the coordinates along the raod section)
+    def getPath(self, startCoord):
+        if len(self.forwardPath) == 0:
+            return
+        
+        if startCoord == [self.forwardPath[0], self.forwardPath[1]]:
+            return self.forwardPath
+        return self.backPath
 
+
+# In[4]:
+
+
+def makeNode(filename):
+    #parse GPX data
+    route = open(filename, 'r')
+    route = route.read()
+
+    center_x = 0.0
+    center_y = 0.0
+    road_path = []
+
+    for i in range(len(route)):
+        if i >= (len(route) - 6):
+            break
+
+        if (route[i] + route[i+1] + route[i+2] + route[i+3] + route[i+4] + route[i+5]) == "center":
+            j = i+7
+            lat = ""
+            while route[j] != '%':
+                lat += route[j]
+                j += 1
+
+            j += 3
+            lon = ""
+            while route[j] != '&':
+                lon += route[j]
+                j += 1
+            center_x = float(lat)
+            center_y = float(lon)
+
+
+        if (route[i] + route[i+1] + route[i+2]) == "lat":
+            j = i+5
+            lat = ""
+            while route[j] != '"':
+                lat += route[j]
+                j += 1
+            road_path.append(float(lat))
+
+        if (route[i] + route[i+1] + route[i+2]) == "lon":
+            j = i+5
+            lon = ""
+            while route[j] != '"':
+                lon += route[j]
+                j += 1
+            road_path.append(float(lon))
+    streetNode = Node(center_x, center_y)
+    streetNode.setPath(road_path)
+    
+    return streetNode
+
+
+# In[5]:
+
+
+# initial setup
 def setup():
     global nodes
     global nodeCost
@@ -54,67 +151,48 @@ def setup():
     
     heapify(openList)
     
+    # set costs to max
     for i in range(numNodes):
         nodeCost.append(sys.maxsize)
     
-    nodes.append(Node(0, 0))
-    nodes.append(Node(.5, 1))
-    nodes.append(Node(1, 1.5))
-    nodes.append(Node(1.25, 2))
-    nodes.append(Node(1.75, 1.75))
-    nodes.append(Node(2, 2))
-    nodes.append(Node(3, 2))
-    nodes.append(Node(3, 2.5))
-    nodes.append(Node(2, 3))
-    nodes.append(Node(3, 3))
-    nodes.append(Node(3, 3.5))
+    epic = Node(buildings["epic"][0], buildings["epic"][1])
+    epic.setBuilding()
+    
+    epic_duke = makeNode("epic_duke.gpx")
+    
+    duke = Node(buildings["duke"][0], buildings["duke"][1])
+    duke.setBuilding()
+    
+    duke_bio = makeNode("duke_bio.gpx")
+    
+    bio = Node(buildings["bio"][0], buildings["bio"][1])
+    bio.setBuilding()
+    
+    bio_grigg = makeNode("bio_grigg.gpx")
+    
+    grigg = Node(buildings["grigg"][0], buildings["grigg"][1])
+    grigg.setBuilding()
+    
+    nodes.append(epic)
+    nodes.append(epic_duke)
+    nodes.append(duke)
+    nodes.append(duke_bio)
+    nodes.append(bio)
+    nodes.append(bio_grigg)
+    nodes.append(grigg)
     
     for i in range(numNodes):
         connectNodes(i, i)
-    
-    connectNodes(0, 1)
-    connectNodes(1, 2)
-    connectNodes(2, 3)
-    connectNodes(2, 4)
-    connectNodes(4, 5)
-    connectNodes(5, 6)
-    connectNodes(5, 8)
-    connectNodes(6, 7)
-    connectNodes(8, 9)
-    connectNodes(9, 10)
+        if(i < numNodes-1):
+            connectNodes(i, i + 1)
     
     calcWeights()
-    
-    nodes[0].setAsBuilding()
-    nodes[3].setAsBuilding()
-    nodes[7].setAsBuilding()
-    nodes[10].setAsBuilding()
-    
-    global bigEdgeMatrix
-    global bigWeightMatrix
-    
-    connectBigNodes(0, 0)
-    connectBigNodes(0, 2)
-    connectBigNodes(2, 2)
-    connectBigNodes(2, 3)
-    connectBigNodes(2, 5)
-    connectBigNodes(3, 3)
-    connectBigNodes(5, 5)
-    connectBigNodes(5, 6)
-    connectBigNodes(5, 9)
-    connectBigNodes(6, 6)
-    connectBigNodes(6, 7)
-    connectBigNodes(7, 7)
-    connectBigNodes(9, 9)
-    connectBigNodes(9, 10)
-    connectBigNodes(10, 10)
-    
-    for i in range(len(bigNodes)):
-        for j in range(len(bigNodes)):
-            if bigEdgeMatrix[i, j] == 1:
-                cost = edgeCost(nodes[bigNodes[i]], nodes[bigNodes[j]])
-                bigWeightMatrix[i, j] = cost
 
+
+# In[6]:
+
+
+# set up functions used in setup
 def edgeCost(node1, node2): # defining the edges using the distance formula
     xdist = node1.xCoord - node2.xCoord
     ydist = node1.yCoord - node2.yCoord
@@ -126,12 +204,6 @@ def connectNodes(node1, node2):
     edgeMatrix[node1, node2] = 1
     edgeMatrix[node2, node1] = 1
 
-def connectBigNodes(node1, node2):
-    global bigEdgeMatrix
-    global bigNodes
-    bigEdgeMatrix[bigNodes.index(node1), bigNodes.index(node2)] = 1
-    bigEdgeMatrix[bigNodes.index(node2), bigNodes.index(node1)] = 1
-
 def calcWeights():
     global edgeMatrix
     global weightMatrix
@@ -142,6 +214,7 @@ def calcWeights():
                 cost = edgeCost(nodes[i], nodes[j])
                 weightMatrix[i, j] = cost
 
+# set initial node
 def setStart(node):
     global nodeCost
     global openList
@@ -150,6 +223,8 @@ def setStart(node):
     explored[node.nodeID] = True
     heappush(openList, node)
 
+    
+# explore a given node
 def explore(node):
     global weightMatrix
     global nodeCost
@@ -169,6 +244,11 @@ def explore(node):
                     nodes[nextNode].setPrevNode(node)
                     heappush(openList, nodes[nextNode])
 
+
+# In[7]:
+
+
+# defining the algorithm to find and graph the path to two points
 def findPath(startNode, destination):
     global nodes
     global weightMatrix
@@ -196,98 +276,40 @@ def findPath(startNode, destination):
         explore(node)
         explored[node.nodeID] = True
         node = heappop(openList)
+    
+    path = []
+    d = buildings["grigg"]
+    while node != None:
+        roadPath = node.getPath(d)
+        if roadPath != None:
+            for i in roadPath:
+                path.append(i)
+        node = node.prevNode
+    
+    path.reverse()
+    return path
 
-    for i in range(numNodes):
-        plt.plot(nodes[i].xCoord, nodes[i].yCoord, marker = "o")
 
-    for i in range(numNodes):
-        for j in range (numNodes):
-            if edgeMatrix[i][j] != 0 :
-                plt.plot([nodes[i].xCoord, nodes[j].xCoord],[nodes[i].yCoord, nodes[j].yCoord], 'b')
+# In[8]:
 
-    currentNode = node
-    prevNode = node.prevNode
 
-    while prevNode != None:
-        plt.plot([currentNode.xCoord, prevNode.xCoord], [currentNode.yCoord, prevNode.yCoord], 'r')
-        currentNode = prevNode
-        prevNode = currentNode.prevNode
-    plt.show()
-    
-
-def bigExplore(node):
-    global bigWeightMatrix
-    global nodeCost
-    global bigNodes
-    global nodes
-    global openList
-    
-    currentNode = node.nodeID
-    
-    for nextNode in range(len(bigNodes)):
-        if not explored[bigNodes[nextNode]]:
-            if bigWeightMatrix[bigNodes.index(currentNode)][nextNode] != 0:
-                newCost = bigWeightMatrix[bigNodes.index(currentNode)][nextNode] + nodeCost[currentNode]
-                
-                if newCost < nodeCost[bigNodes[nextNode]]:
-                    nodeCost[bigNodes[nextNode]] = newCost
-                    nodes[bigNodes[nextNode]].setPrevNode(node)
-                    heappush(openList, nodes[bigNodes[nextNode]])
-    
-def findBigPath(startNode, destination):
-    global bigNodes
-    global bigWeightMatrix
-    global nodeCost
-    global openList
-    global explored
-    global nodes
-    
-    #reset the algorithm
-    while len(openList) != 0:
-        heappop(openList)
-    
-    for i in range(numNodes):
-        nodeCost[i] = sys.maxsize
-        nodes[i].setPrevNode(None)
-    
-    explored = [False] * numNodes
-    
-    #set start node
-    setStart(startNode)
-    
-    node = heappop(openList)
-
-    while node != destination:
-        bigExplore(node)
-        explored[node.nodeID] = True
-        node = heappop(openList)
-    
-    #reset the algorithm
-    while len(openList) != 0:
-        heappop(openList)
-    
-    explored = [False] * numNodes
-    
-    return node
-
+# run the algorithm between 2 points
 setup()
 
-findPath(nodes[0], nodes[10])
-findPath(nodes[0], nodes[7])
-node = findBigPath(nodes[0], nodes[10])
+path = findPath(nodes[0], nodes[numNodes-1])
 
+
+# In[9]:
+
+
+# plot the full path taken
 for i in range(numNodes):
-    plt.plot(nodes[i].xCoord, nodes[i].yCoord, marker = "o")
-
-for i in range(numNodes):
-        for j in range (numNodes):
-            if edgeMatrix[i][j] != 0 :
-                plt.plot([nodes[i].xCoord, nodes[j].xCoord],[nodes[i].yCoord, nodes[j].yCoord], 'b')
-
-currentNode = node
-prevNode = currentNode.prevNode                
-while prevNode != None:
-    plt.plot([currentNode.xCoord, prevNode.xCoord], [currentNode.yCoord, prevNode.yCoord], 'r')
-    currentNode = prevNode
-    prevNode = currentNode.prevNode
+        if nodes[i].isBuilding:
+            plt.plot(nodes[i].yCoord, nodes[i].xCoord, marker = "o")
+i = 0
+while (i + 3) < len(path):
+    plt.plot([path[i + 1], path[i + 3]], [path[i + 0], path[i + 2]], 'r')
+    i += 2
 plt.show()
+
+
