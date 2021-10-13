@@ -3,9 +3,13 @@
 
 import overpy
 import pandas as pd
+import os
 
 OverpassAPI = overpy.Overpass()
-df = pd.DataFrame(columns=[ 'ID', 'Longtitude', 'Latitude'])
+if os.path.isfile('Map_data.csv') :
+    df = pd.read_csv ('Map_data.csv')
+else :
+    df = pd.DataFrame(columns=[ 'ID', 'Longtitude', 'Latitude'])
 
 #Class for using OSM Overpass API
 class OverPass_API_Search:
@@ -33,8 +37,9 @@ class OverPass_API_Search:
 
 
 if __name__ == "__main__":
-    a = "[out:xml];node(35.30716, -80.74561, 35.31319, -80.73666);out;"
-    node, way =  OverPass_API_Search.QueryGetInfobyBox(a)
-    for i in range (len(node)):
-        df = df.append({'ID': node[i].id, 'Longtitude' : node[i].lon, 'Latitude' : node[i].lat}, ignore_index=True)
-    df.to_csv('export_dataframe.csv', index = False, header = True)
+    #a = "[out:xml];nw(35.30716, -80.74561, 35.31319, -80.73666);out;"
+    #node, way =  OverPass_API_Search.QueryGetInfobyBox(a)
+    #for i in range (len(node)):
+        #df = df.append({'ID': node[i].id, 'Longtitude' : node[i].lon, 'Latitude' : node[i].lat}, ignore_index=True)
+    #df.to_csv('Map_data.csv', index = False, header = True)
+    print(df)
