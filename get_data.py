@@ -43,3 +43,7 @@ if __name__ == "__main__":
         #df = df.append({'ID': node[i].id, 'Longtitude' : node[i].lon, 'Latitude' : node[i].lat}, ignore_index=True)
     #df.to_csv('Map_data.csv', index = False, header = True)
     print(df)
+    if 172358822 in df['ID'].values:
+        print("ture")
+    else :
+        print("False")
