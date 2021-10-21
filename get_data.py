@@ -47,3 +47,4 @@ if __name__ == "__main__":
         print("ture")
     else :
         print("False")
+        print(1)
