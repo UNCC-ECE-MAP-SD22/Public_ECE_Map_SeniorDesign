@@ -4,11 +4,10 @@
 # Imports
 import math
 from heapq import heapify, heappush, heappop # This is for the min heap library
-import numpy as np
-import sys
-#import random 
-#import time
-from matplotlib import pyplot as plt
+import numpy as np # probably not necessary, but is used for initializing the edge and weights
+import sys # used for setting the costs to inf (could be replaced with just using a really large number)
+import time # used to get the runtime of the algorithm
+from matplotlib import pyplot as plt # used to graph the path taken
 
 
 # In[2]:
@@ -43,8 +42,7 @@ class Node(): # defining nodes
     yCoord = 0
     prevNode = None
     isBuilding = False
-    forwardPath = []
-    backPath = []
+    path = []
     
     # initialize an instance
     def __init__ (self, xCoord, yCoord):
@@ -66,76 +64,73 @@ class Node(): # defining nodes
     def setPrevNode(self, node):
         self.prevNode = node
     
+    # set as building to be shown on the map
     def setBuilding(self):
         self.isBuilding = True
     
     # used for the path storage in the abstraction
-    def setPath(self, path):
-        self.forwardPath = path
-        temp = path
-        temp.reverse()
-        self.backPath = temp
+    def setPath(self, newPath):
+        newPath.reverse()
+        self.path = newPath
     
     # return the path stored in the big node (the coordinates along the raod section)
     def getPath(self, startCoord):
-        if len(self.forwardPath) == 0:
+        if len(self.path) == 0:
             return
         
-        if startCoord == [self.forwardPath[0], self.forwardPath[1]]:
-            return self.forwardPath
-        return self.backPath
+        return self.path
 
 
 # In[4]:
 
 
-def makeNode(filename):
-    #parse GPX data
+#parse GPX data from GPX files
+def makeNode(filename): 
     route = open(filename, 'r')
     route = route.read()
 
-    center_x = 0.0
-    center_y = 0.0
     road_path = []
+    atCoords = False
 
     for i in range(len(route)):
-        if i >= (len(route) - 6):
+        if i >= (len(route) - 4):
             break
+        if (route[i] + route[i+1] + route[i+2] + route[i+3] + route[i+4]) == "<trk>":
+            atCoords = True
+        if atCoords:
+            if (route[i] + route[i+1] + route[i+2]) == "lat":
+                j = i+5
+                lat = ""
+                while route[j] != '"':
+                    lat += route[j]
+                    j += 1
+                road_path.append(float(lat))
 
-        if (route[i] + route[i+1] + route[i+2] + route[i+3] + route[i+4] + route[i+5]) == "center":
-            j = i+7
-            lat = ""
-            while route[j] != '%':
-                lat += route[j]
-                j += 1
-
-            j += 3
-            lon = ""
-            while route[j] != '&':
-                lon += route[j]
-                j += 1
-            center_x = float(lat)
-            center_y = float(lon)
-
-
-        if (route[i] + route[i+1] + route[i+2]) == "lat":
-            j = i+5
-            lat = ""
-            while route[j] != '"':
-                lat += route[j]
-                j += 1
-            road_path.append(float(lat))
-
-        if (route[i] + route[i+1] + route[i+2]) == "lon":
-            j = i+5
-            lon = ""
-            while route[j] != '"':
-                lon += route[j]
-                j += 1
-            road_path.append(float(lon))
+            if (route[i] + route[i+1] + route[i+2]) == "lon":
+                j = i+5
+                lon = ""
+                while route[j] != '"':
+                    lon += route[j]
+                    j += 1
+                road_path.append(float(lon))
+                
+    # create an abstracted location for Dijkstra's using the average of the GPS coords
+    xSum = 0
+    ySum = 0
+    for i in range(len(road_path)):
+        if i%2:
+            ySum += road_path[i]
+        else:
+            xSum += road_path[i]
+    
+    center_x = xSum / (len(road_path) / 2)
+    center_y = ySum / (len(road_path) / 2)
+    
+    # create and instantiate the node class
     streetNode = Node(center_x, center_y)
     streetNode.setPath(road_path)
     
+    # return the node
     return streetNode
 
 
@@ -193,17 +188,21 @@ def setup():
 
 
 # set up functions used in setup
-def edgeCost(node1, node2): # defining the edges using the distance formula
+
+# defining the edges using the distance formula
+def edgeCost(node1, node2): 
     xdist = node1.xCoord - node2.xCoord
     ydist = node1.yCoord - node2.yCoord
     dist = math.sqrt(pow(xdist, 2) + pow(ydist, 2))
     return dist
 
+# symmetrically connenct 2 nodes
 def connectNodes(node1, node2):
     global edgeMatrix
     edgeMatrix[node1, node2] = 1
     edgeMatrix[node2, node1] = 1
 
+# update the weight matrix using the edgeCost function
 def calcWeights():
     global edgeMatrix
     global weightMatrix
@@ -257,35 +256,60 @@ def findPath(startNode, destination):
     global openList
     global explored
     
-    #reset the algorithm
+    # reset the algorithm
     while len(openList) != 0:
         heappop(openList)
     
+    # set costs to max, remove all previous node data
     for i in range(numNodes):
         nodeCost[i] = sys.maxsize
         nodes[i].setPrevNode(None)
     
     explored = [False] * numNodes
     
-    #set start node
+    # set start node
     setStart(startNode)
     
     node = heappop(openList)
-
+    
+    # eplore until we find the destination
     while node != destination:
         explore(node)
         explored[node.nodeID] = True
         node = heappop(openList)
     
     path = []
-    d = buildings["grigg"]
+    dest = [node.xCoord, node.yCoord]
+    
+    # walk backwards through our explored nodes and extract the path taken
     while node != None:
-        roadPath = node.getPath(d)
-        if roadPath != None:
-            for i in roadPath:
-                path.append(i)
+        if node.isBuilding:
+            dest = [node.xCoord, node.yCoord]
+        else:
+            roadPath = node.getPath(dest)
+            
+            if roadPath != None:
+                # reverse the path if coming from the opposite direction
+                if dest != [roadPath[1], roadPath[0]]:
+                    i = len(roadPath) - 1
+                    while (i - 1) >= 0:
+                        path.append(roadPath[i - 1])
+                        path.append(roadPath[i])
+                        i -= 2
+                
+                # otherwise keep the original stored direction
+                else:
+                    for i in roadPath:
+                        path.append(i)
+                
+                #print(dest)
+                #print(roadPath[1], roadPath[0])
+                #print(roadPath[-1], roadPath[-2])
+                
+        # continue working backwards
         node = node.prevNode
     
+    # reverse the entire path to get the path from start to destination
     path.reverse()
     return path
 
@@ -293,19 +317,24 @@ def findPath(startNode, destination):
 # In[8]:
 
 
-# run the algorithm between 2 points
 setup()
 
+print("Start", time.time())
+
+# run the algorithm between 2 points, returning the path to graph
 path = findPath(nodes[0], nodes[numNodes-1])
+#path = findPath(nodes[numNodes-1], nodes[0])
+
+print("Finish", time.time())
 
 
 # In[9]:
 
 
-# plot the full path taken
+# plot the full path taken in an isometric view
 for i in range(numNodes):
-        if nodes[i].isBuilding:
-            plt.plot(nodes[i].yCoord, nodes[i].xCoord, marker = "o")
+    if nodes[i].isBuilding:
+        plt.plot(nodes[i].yCoord, nodes[i].xCoord, marker = "o")
 i = 0
 while (i + 3) < len(path):
     plt.plot([path[i + 1], path[i + 3]], [path[i + 0], path[i + 2]], 'r')
@@ -313,3 +342,15 @@ while (i + 3) < len(path):
 plt.show()
 
 
+# In[10]:
+
+
+# plot the full path taken in a top down view
+for i in range(numNodes):
+    if nodes[i].isBuilding:
+        plt.plot(nodes[i].xCoord, -nodes[i].yCoord, marker = "o")
+i = 0
+while (i + 3) < len(path):
+    plt.plot([path[i + 0], path[i + 2]], [-path[i + 1], -path[i + 3]], 'r')
+    i += 2
+plt.show()
