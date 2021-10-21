@@ -29,3 +29,10 @@ development of this phase, will be on the implementation of the algorithms into 
 - [gpx](https://github.com/leeinfy/ECE_Map_SeniorDesign/tree/main/gpx)
 - [csv](https://github.com/leeinfy/ECE_Map_SeniorDesign/tree/main/csv)
 
+## Dijkstras.py
+Dijkstras.py is the main file that will be used for the robot implementation. The Dijkstras file is currently responsible for setting up the nodes and their connections, running the dijkstra's algorithm, and displaying a graph of the path taken. These functions may be broken down into multiple files if that would allow for easier / more simple implementations when using the Turtlebots, but for now have been consolidated into a single file.
+
+#### TODO: 
+- Continue to expand the node network to include all of EPIC side of campus
+- Implement paths to buildings that utilize the ramps
+
