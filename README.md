@@ -36,3 +36,12 @@ Dijkstras.py is the main file that will be used for the robot implementation. Th
 - Continue to expand the node network to include all of EPIC side of campus
 - Implement paths to buildings that utilize the ramps
 
+
+## GPX Data
+The data files obtained from OSM that contain the coordinates along various road segments, these are loaded and interpreted and used to create the abstracted nodes in the node network.
+
+Credit to [OSM](https://www.openstreetmap.org/copyright)
+© OpenStreetMap contributors
+
+## test_code
+This folder includes all old code that was either used for testing purposes or was later used in the final implementation. Mostly just kept for reference or for smaller scale examples of the code. Also serves as a good folder to place code that uses alternative methods, or code that is not currently being used, but may be helpful in the future.
