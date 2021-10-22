@@ -19,7 +19,7 @@ development of this phase, will be on the implementation of the algorithms into 
 
 ## Table of content
 #### Python files
-- Dijkstras.py
+- [Dijkstras.py](https://github.com/leeinfy/ECE_Map_SeniorDesign#dijkstraspy)
 - UNCEngineerMap.py
 - get_data.py
 - plot.py
