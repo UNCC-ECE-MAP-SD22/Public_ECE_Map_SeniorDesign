@@ -153,17 +153,17 @@ def setup():
     epic = Node(buildings["epic"][0], buildings["epic"][1])
     epic.setBuilding()
     
-    epic_duke = makeNode("epic_duke.gpx")
+    epic_duke = makeNode("gpx/epic_duke.gpx")
     
     duke = Node(buildings["duke"][0], buildings["duke"][1])
     duke.setBuilding()
     
-    duke_bio = makeNode("duke_bio.gpx")
+    duke_bio = makeNode("gpx/duke_bio.gpx")
     
     bio = Node(buildings["bio"][0], buildings["bio"][1])
     bio.setBuilding()
     
-    bio_grigg = makeNode("bio_grigg.gpx")
+    bio_grigg = makeNode("gpx/bio_grigg.gpx")
     
     grigg = Node(buildings["grigg"][0], buildings["grigg"][1])
     grigg.setBuilding()
