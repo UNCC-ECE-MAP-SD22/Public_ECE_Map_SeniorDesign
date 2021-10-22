@@ -1,6 +1,3 @@
-#Auther: Yinfei Li
-#Date: OCT 8, 2021
-
 import overpy
 import pandas as pd
 import os
