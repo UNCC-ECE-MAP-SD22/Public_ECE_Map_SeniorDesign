@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 # In[1]:
 
 
 # Imports
 import math
-from heapq import heapify, heappush, heappop # This is for the min heap library
+from heapq import heapify, heappush, heappop # This is for the min heap
 import numpy as np # probably not necessary, but is used for initializing the edge and weights
 import sys # used for setting the costs to inf (could be replaced with just using a really large number)
 import time # used to get the runtime of the algorithm
@@ -14,7 +17,7 @@ from matplotlib import pyplot as plt # used to graph the path taken
 
 
 # Set up variables for dijkstra's
-numNodes = 7
+numNodes = 23
 edgeMatrix = np.zeros(shape = [numNodes, numNodes], dtype = int)
 weightMatrix = np.zeros(shape = [numNodes, numNodes], dtype = float)
 nodes = []
@@ -23,12 +26,19 @@ nodeCost = []
 explored = [False] * numNodes
 openList = []
 
-# defines coordinates of each building
-buildings = {
-    "epic": [35.30923, -80.74114],
-    "duke": [35.31222, -80.74083],
-    "bio": [35.31289, -80.74168],
-    "grigg": [35.31143, -80.7427],
+# defines coordinates of each big node (buildings and intersections)
+bigNodes = {
+    "phillips": [35.30888, -80.74064],
+    "epic": [35.30934, -80.74132],
+    "grigg": [35.31092, -80.74148],
+    "duke": [35.31163, -80.74076],
+    "motorsports": [35.3124, -80.74048],
+    "robSny": [35.31287, -80.74115],
+    "bioinformatics": [35.31233, -80.74176],
+    "circBio": [35.31211, -80.74199],
+    "circInst": [35.31207, -80.74233],
+    "circPortal": [35.31178, -80.74235],
+    "portal": [35.31147, -80.74266],
 }
 
 
@@ -41,10 +51,10 @@ class Node(): # defining nodes
     xCoord = 0
     yCoord = 0
     prevNode = None
-    isBuilding = False
+    isBigNode = False
     path = []
     
-    # initialize an instance
+    # instantiate a node with given GPS coords
     def __init__ (self, xCoord, yCoord):
         global nodeCounter
         self.xCoord = xCoord
@@ -64,9 +74,9 @@ class Node(): # defining nodes
     def setPrevNode(self, node):
         self.prevNode = node
     
-    # set as building to be shown on the map
-    def setBuilding(self):
-        self.isBuilding = True
+    # set as big node to be shown on the map
+    def setBigNode(self):
+        self.isBigNode = True
     
     # used for the path storage in the abstraction
     def setPath(self, newPath):
@@ -91,7 +101,8 @@ def makeNode(filename):
 
     road_path = []
     atCoords = False
-
+    
+    # iterate through the GPX file and grab the latitudes and longitudes
     for i in range(len(route)):
         if i >= (len(route) - 4):
             break
@@ -144,50 +155,130 @@ def setup():
     global numNodes
     global openList
     
+    # convert to heap
     heapify(openList)
     
     # set costs to max
     for i in range(numNodes):
         nodeCost.append(sys.maxsize)
     
-    epic = Node(buildings["epic"][0], buildings["epic"][1])
-    epic.setBuilding()
+    # creates building, intersections, and path nodes
     
-    epic_duke = makeNode("gpx/epic_duke.gpx")
+    wellsFargo_phillipX =makeNode("gpx/phillips_wellsfargo_phillips_phillips.gpx")
     
-    duke = Node(buildings["duke"][0], buildings["duke"][1])
-    duke.setBuilding()
+    phillipsX = Node(bigNodes["phillips"][0], bigNodes["phillips"][1])
+    phillipsX.setBigNode()
     
-    duke_bio = makeNode("gpx/duke_bio.gpx")
+    phillipX_epic = makeNode("gpx/phillips_phillips_In-front-of-Epic.gpx")
     
-    bio = Node(buildings["bio"][0], buildings["bio"][1])
-    bio.setBuilding()
+    epic = Node(bigNodes["epic"][0], bigNodes["epic"][1])
+    epic.setBigNode()
     
-    bio_grigg = makeNode("gpx/bio_grigg.gpx")
+    epic_grigg = makeNode("gpx/In-front-of-Epic_In-front-of-Grigg.gpx")
     
-    grigg = Node(buildings["grigg"][0], buildings["grigg"][1])
-    grigg.setBuilding()
+    grigg = Node(bigNodes["grigg"][0], bigNodes["grigg"][1])
+    grigg.setBigNode()
     
+    grigg_duke = makeNode("gpx/In-Front-of-Grigg_In-Front-of-Duke.gpx")
+    
+    duke = Node(bigNodes["duke"][0], bigNodes["duke"][1])
+    duke.setBigNode()
+    
+    duke_motor = makeNode("gpx/In-front-of-Duke_In-front-of-Motorsports.gpx")
+    
+    motor = Node(bigNodes["motorsports"][0], bigNodes["motorsports"][1])
+    motor.setBigNode()
+    
+    motor_robSnyX = makeNode("gpx/In-front-of-MSRB_robert-snyder_phillips.gpx")
+    
+    robSnyX = Node(bigNodes["robSny"][0], bigNodes["robSny"][1])
+    robSnyX.setBigNode()
+    
+    robSnyX_bio = makeNode("gpx/robert-snyder_phillips_In-front-of-BioInfo.gpx")
+    
+    bio = Node(bigNodes["bioinformatics"][0], bigNodes["bioinformatics"][1])
+    bio.setBigNode()
+    
+    bio_circBio = makeNode("gpx/In-front-of-BioInfo_Institutecir_Bio.gpx")
+    
+    circBio = Node(bigNodes["circBio"][0], bigNodes["circBio"][1])
+    circBio.setBigNode()
+    
+    circBio_circInst = makeNode("gpx/institutecir-bio_institute-institutecir.gpx")
+    
+    circInst = Node(bigNodes["circInst"][0], bigNodes["circInst"][1])
+    circInst.setBigNode()
+    
+    circInst_circPortal = makeNode("gpx/institutecir-institute_institutecir-portal.gpx")
+    
+    circPortal = Node(bigNodes["circPortal"][0], bigNodes["circPortal"][1])
+    circPortal.setBigNode()
+    
+    circPortal_circBio = makeNode("gpx/Institutecir-portal_institute-BioInfo_UNDERSIDE.gpx")
+    
+    circPortal_portal = makeNode("gpx/institutecir-portal_In-front-of-Portal.gpx")
+    
+    portal = Node(bigNodes["portal"][0], bigNodes["portal"][1])
+    portal.setBigNode()
+    
+    
+    # append all nodes to the nodes list
+    nodes.append(wellsFargo_phillipX) #0
+    nodes.append(phillipsX)
+    nodes.append(phillipX_epic)
     nodes.append(epic)
-    nodes.append(epic_duke)
-    nodes.append(duke)
-    nodes.append(duke_bio)
-    nodes.append(bio)
-    nodes.append(bio_grigg)
+    nodes.append(epic_grigg)
     nodes.append(grigg)
+    nodes.append(grigg_duke)
+    nodes.append(duke)
+    nodes.append(duke_motor)
+    nodes.append(motor)
+    nodes.append(motor_robSnyX) #10
+    nodes.append(robSnyX)
+    nodes.append(robSnyX_bio)
+    nodes.append(bio)
+    nodes.append(bio_circBio)
+    nodes.append(circBio)
+    nodes.append(circBio_circInst)
+    nodes.append(circInst)
+    nodes.append(circInst_circPortal)
+    nodes.append(circPortal)
+    nodes.append(circPortal_circBio) #20
+    nodes.append(circPortal_portal)
+    nodes.append(portal)
     
-    for i in range(numNodes):
-        connectNodes(i, i)
-        if(i < numNodes-1):
-            connectNodes(i, i + 1)
     
+    # connect each node to the next node and itself
+    connectNodes( 0 , 1 )
+    connectNodes( 1 , 2 )
+    connectNodes( 2 , 3 )
+    connectNodes( 3 , 4 )
+    connectNodes( 4 , 5 )
+    connectNodes( 5 , 6 )
+    connectNodes( 6 , 7 )
+    connectNodes( 7 , 8 )
+    connectNodes( 8 , 9 )
+    connectNodes( 9 , 10 )
+    connectNodes( 10 , 11 )
+    connectNodes( 11 , 12 )
+    connectNodes( 12 , 13 )
+    connectNodes( 13 , 14 )
+    connectNodes( 14 , 15 )
+    connectNodesAsym( 15 , 16 )
+    connectNodesAsym( 16 , 17 )
+    connectNodesAsym( 17 , 18 )
+    connectNodesAsym( 18 , 19 )
+    connectNodesAsym( 19 , 20 )
+    connectNodesAsym( 20 , 15 )
+    connectNodes( 19 , 21 )
+    connectNodes( 21 , 22 )
+    
+    # update the weight matrix
     calcWeights()
 
 
 # In[6]:
 
-
-# set up functions used in setup
 
 # defining the edges using the distance formula
 def edgeCost(node1, node2): 
@@ -196,12 +287,17 @@ def edgeCost(node1, node2):
     dist = math.sqrt(pow(xdist, 2) + pow(ydist, 2))
     return dist
 
-# symmetrically connenct 2 nodes
+# symmetrically connect 2 nodes
 def connectNodes(node1, node2):
     global edgeMatrix
     edgeMatrix[node1, node2] = 1
     edgeMatrix[node2, node1] = 1
 
+# asymmetrically connect 2 nodes
+def connectNodesAsym(node1, node2):
+    global edgeMatrix
+    edgeMatrix[node1, node2] = 1
+    
 # update the weight matrix using the edgeCost function
 def calcWeights():
     global edgeMatrix
@@ -256,7 +352,7 @@ def findPath(startNode, destination):
     global openList
     global explored
     
-    # reset the algorithm
+    # clear the heap
     while len(openList) != 0:
         heappop(openList)
     
@@ -265,6 +361,7 @@ def findPath(startNode, destination):
         nodeCost[i] = sys.maxsize
         nodes[i].setPrevNode(None)
     
+    # set all nodes as unexplored
     explored = [False] * numNodes
     
     # set start node
@@ -283,7 +380,7 @@ def findPath(startNode, destination):
     
     # walk backwards through our explored nodes and extract the path taken
     while node != None:
-        if node.isBuilding:
+        if node.isBigNode:
             dest = [node.xCoord, node.yCoord]
         else:
             roadPath = node.getPath(dest)
@@ -302,10 +399,6 @@ def findPath(startNode, destination):
                     for i in roadPath:
                         path.append(i)
                 
-                #print(dest)
-                #print(roadPath[1], roadPath[0])
-                #print(roadPath[-1], roadPath[-2])
-                
         # continue working backwards
         node = node.prevNode
     
@@ -314,7 +407,7 @@ def findPath(startNode, destination):
     return path
 
 
-# In[8]:
+# In[16]:
 
 
 setup()
@@ -322,18 +415,18 @@ setup()
 print("Start", time.time())
 
 # run the algorithm between 2 points, returning the path to graph
-path = findPath(nodes[0], nodes[numNodes-1])
+path = findPath(nodes[1], nodes[numNodes-1])
 #path = findPath(nodes[numNodes-1], nodes[0])
 
 print("Finish", time.time())
 
 
-# In[9]:
+# In[17]:
 
 
 # plot the full path taken in an isometric view
 for i in range(numNodes):
-    if nodes[i].isBuilding:
+    if nodes[i].isBigNode:
         plt.plot(nodes[i].yCoord, nodes[i].xCoord, marker = "o")
 i = 0
 while (i + 3) < len(path):
@@ -342,15 +435,46 @@ while (i + 3) < len(path):
 plt.show()
 
 
-# In[10]:
+# In[18]:
 
 
 # plot the full path taken in a top down view
 for i in range(numNodes):
-    if nodes[i].isBuilding:
+    if nodes[i].isBigNode:
         plt.plot(nodes[i].xCoord, -nodes[i].yCoord, marker = "o")
 i = 0
 while (i + 3) < len(path):
     plt.plot([path[i + 0], path[i + 2]], [-path[i + 1], -path[i + 3]], 'r')
     i += 2
 plt.show()
+
+
+# In[15]:
+
+
+# convert the path into the array format of Matlab (x1 y1; x2 y2; etc.)
+matlabPath = ""
+for i in range(len(path)):
+    if i == 0:
+        matlabPath += str(path[i])
+    else:
+        matlabPath += " " + str(path[i])
+    if i%2 == 1 and i != 0:
+        matlabPath += ";"
+print(matlabPath)
+
+
+# In[12]:
+
+
+#for i in range(numNodes):
+    #connectNodes(i,i)
+    #if(i < numNodes-1):
+        #onnectNodes(i,i+1)
+
+
+# In[ ]:
+
+
+
+
