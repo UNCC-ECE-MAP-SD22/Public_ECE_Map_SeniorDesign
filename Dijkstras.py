@@ -369,7 +369,7 @@ def findPath(startNode, destination):
     
     node = heappop(openList)
     
-    # eplore until we find the destination
+    # explore until we find the destination
     while node != destination:
         explore(node)
         explored[node.nodeID] = True
@@ -407,7 +407,7 @@ def findPath(startNode, destination):
     return path
 
 
-# In[16]:
+# In[8]:
 
 
 setup()
@@ -415,13 +415,14 @@ setup()
 print("Start", time.time())
 
 # run the algorithm between 2 points, returning the path to graph
-path = findPath(nodes[1], nodes[numNodes-1])
-#path = findPath(nodes[numNodes-1], nodes[0])
+path = findPath(nodes[3], nodes[numNodes-1])
+#path = findPath(nodes[numNodes-1], nodes[7])
+#path = findPath(nodes[7], nodes[9])
 
 print("Finish", time.time())
 
 
-# In[17]:
+# In[9]:
 
 
 # plot the full path taken in an isometric view
@@ -435,7 +436,7 @@ while (i + 3) < len(path):
 plt.show()
 
 
-# In[18]:
+# In[10]:
 
 
 # plot the full path taken in a top down view
@@ -449,7 +450,7 @@ while (i + 3) < len(path):
 plt.show()
 
 
-# In[15]:
+# In[11]:
 
 
 # convert the path into the array format of Matlab (x1 y1; x2 y2; etc.)
@@ -461,16 +462,155 @@ for i in range(len(path)):
         matlabPath += " " + str(path[i])
     if i%2 == 1 and i != 0:
         matlabPath += ";"
-print(matlabPath)
+#print(matlabPath)
 
 
 # In[12]:
 
 
-#for i in range(numNodes):
-    #connectNodes(i,i)
-    #if(i < numNodes-1):
-        #onnectNodes(i,i+1)
+# post processing on the path
+postPath = []
+
+# minimum distance between nodes
+D = 0.0001
+i = 0
+while i < len(path) - 4:
+    xdist = path[i+2] - path[i]
+    ydist = path[i+3] - path[i+1]
+    dist = math.sqrt(pow(xdist, 2) + pow(ydist, 2))
+    
+    # if no repeaeted nodes, add the first node
+    if xdist != 0 and ydist != 0:
+        postPath.append(path[i])
+        postPath.append(path[i+1])
+    
+    if dist >= D:
+        numNewNodes = dist // D
+        scaling = D / dist
+        for j in range(int(numNewNodes)):
+            xCoord = (j+1) * xdist/numNewNodes + path[i]
+            yCoord = (j+1) * ydist/numNewNodes + path[i+1]
+            
+            postPath.append(xCoord)
+            postPath.append(yCoord)
+    i += 2
+postPath.append(path[-2])
+postPath.append(path[-1])
+
+#remove any repeated nodes
+i = 0
+fixedPath = []
+
+while i < len(postPath) - 4:
+    xdist = postPath[i+2] - postPath[i]
+    ydist = postPath[i+3] - postPath[i+1]
+    if xdist != 0 and ydist != 0:
+        fixedPath.append(postPath[i])
+        fixedPath.append(postPath[i+1])
+    i += 2
+fixedPath.append(postPath[-4])
+fixedPath.append(postPath[-3])
+fixedPath.append(postPath[-2])
+fixedPath.append(postPath[-1])
+
+#path = fixedPath
+
+
+# In[13]:
+
+
+i = 0
+while i < len(path) - 1:
+    plt.plot(path[i], path[i+1], marker = "o")
+    i += 2
+
+
+# In[14]:
+
+
+i = 0
+while i < len(postPath) - 1:
+    plt.plot(postPath[i], postPath[i+1], marker = "o")
+    i += 2
+
+
+# In[15]:
+
+
+turnPath = []
+
+temp = path
+path = fixedPath
+
+i = 0
+beenCurved = False
+while i < len(path) - 6:
+    xDelta1 = path[i+2] - path[i]# + .000001
+    yDelta1 = path[i+3] - path[i+1]# + .000001
+    
+    xDelta2 = path[i+4] - path[i+2]# + .000001
+    yDelta2 = path[i+5] - path[i+3]# + .000001
+    
+    m1 = yDelta1 / xDelta2
+    m2 = yDelta2 / xDelta2
+    
+    theta = math.atan((m2-m1) / (1+m1*m2))
+    #print(theta)
+    
+    # set 15 degree max turn
+    turn = 3.14 * 15/180
+    # set distance between nodes
+    H = 0.00005
+    
+    if beenCurved:
+        beenCurved = False
+    elif abs(theta) >= turn:
+        beenCurved = True
+        
+        def getValue(x1,x2,t):
+            return x1+(x2-x1)*t
+
+        def draw(x,y):
+            x0 = getValue(x[0], x[1], j / N)
+            y0 = getValue(y[0], y[1], j / N)
+            x1 = getValue(x[1], x[2], j / N)
+            y1 = getValue(y[1], y[2], j / N)
+            xCoords.append(getValue(x0, x1, j / N))
+            yCoords.append(getValue(y0, y1, j / N))
+
+            return
+
+        xCoords=[]
+        yCoords=[]
+        N = 5
+        x = [path[i], path[i+2], path[i+4]]
+        y = [path[i+1], path[i+3], path[i+5]]
+
+        for j in range(N+1):
+            draw(x,y)
+        
+        for k in range(len(xCoords)):
+            turnPath.append(xCoords[k])
+            turnPath.append(yCoords[k])
+    else:
+        turnPath.append(path[i])
+        turnPath.append(path[i+1])
+    i += 2
+turnPath.append(path[-4])
+turnPath.append(path[-3])
+turnPath.append(path[-2])
+turnPath.append(path[-1])
+    
+path = temp
+
+
+# In[16]:
+
+
+i = 0
+while i < len(turnPath) - 1:
+    plt.plot(turnPath[i], turnPath[i+1], marker = "o")
+    i += 2
 
 
 # In[ ]:
