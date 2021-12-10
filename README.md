@@ -45,3 +45,7 @@ Credit to [OSM](https://www.openstreetmap.org/copyright)
 
 ## test_code
 This folder includes all old code that was either used for testing purposes or was later used in the final implementation. Mostly just kept for reference or for smaller scale examples of the code. Also serves as a good folder to place code that uses alternative methods, or code that is not currently being used, but may be helpful in the future.
+
+## Matlab Stitching Program
+The folder includes the Matlab script used to perform the stitching and all the individual images including the stitched images to generate the final map image with best
+resolution quality.
